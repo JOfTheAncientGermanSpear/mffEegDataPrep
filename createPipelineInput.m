@@ -1,7 +1,7 @@
-function pipelineInput = createPipelineInput(test, mffPathBase)
-%function pipelineInput = createPipelineInput(test, mffPathBase)
+function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath)
+%function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath)
 
-mffPath = [mffPathBase test '.mff'];
+mffPath = [mffBasePath filesep test '.mff'];
 
 [mffEvents, Fs] = readMffEvents(mffPath);
 mff.events = mffEvents;
@@ -13,5 +13,8 @@ pipelineInput.mffEvents = mffEvents';
 pipelineInput.events = events;
 pipelineInput.test = test;
 pipelineInput.mffPath = mffPath;
+
+edfPath = [edfBasePath filesep test '.edf'];
+pipelineInput.edfPath = edfPath;
 
 end
