@@ -12,4 +12,16 @@ function pipelineInputs = erpEegs(tests, mffBasePath)
 pipelineInputs = cellfun(@(t) createPipelineInput(t, mffBasePath), tests, 'UniformOutput', false);
 pipelineInputs = [pipelineInputs{:}];
 
+processInputsSub(pipelineInputs);
+
+end
+
+function processInputsSub(pipelineInputs)
+    numInputs = length(pipelineInputs);
+    
+    for i = 1:numInputs
+        input = pipelineInputs(i);
+        test = input.test;
+        mkdir([test '_sandbox']);
+    end
 end
