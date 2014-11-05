@@ -2,7 +2,7 @@ function runPipeline(pipelineInput)
     [callerDir, sandboxDir] = mkdirSub(pipelineInput);
     cd(sandboxDir);
     
-    D = spm_eeg_convert(convertParamsSub(pipelineInput));
+    spm_eeg_convert(convertParamsSub(pipelineInput));
     
     cd(callerDir);
 end
@@ -17,4 +17,10 @@ function S = convertParamsSub(pipelineInput)
     S.dataset = pipelineInput.edfPath;
     S.mode = 'continuous';
     S.checkboundary = 0;
+    
+    startTime = pipelineInput.events(1).time - .1;
+    stopTime = pipelineInput.events(end).time + .1;
+    if startTime < 0, startTime = 0; end;
+    
+    S.timewin = [startTime stopTime];
 end
