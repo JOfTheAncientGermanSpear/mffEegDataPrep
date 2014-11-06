@@ -36,9 +36,13 @@ function events = prepEvents(mff)
         events(numEvents).time = samples(i);
         if mod(i,2)
             events(numEvents).type = 'solid';
+            events(numEvents).label = 'solid';
+            events(numEvents).value = 1;
             i = i + 1;
         else
             events(numEvents).type = 'dashed';
+            events(numEvents).label = 'dashed';
+            events(numEvents).value = 0;
             i = i + 3;
         end
     end

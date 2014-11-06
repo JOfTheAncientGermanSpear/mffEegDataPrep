@@ -1,28 +1,51 @@
-function resultFiles = runPipeline(pipelineInputs)
-%function resultFiles = runPipeline(pipelineInputs)
-    
-    resultFiles = arrayfun(@(i) singleRunSub(i), pipelineInputs, 'UniformOutput', 0);
-end
+function runPipeline(pipelineInput, stepIndices)
+%function runPipeline(pipelineInput, stepIndices)
+%   pipelineInput: 
+%       see createPipelineInput
+%   stepIndices: optional
+%       steps to execute within, useful for quickly debugging
+%       defaults to [-inf inf]
+%       saved files from previous steps must be available
 
-function resultFile = singleRunSub(pipelineInput)
     [callerDir, sandboxDir] = mkdirSub(pipelineInput);
     cd(sandboxDir);
-
-    if ~pipelineInput.skipConvert
-        spm_eeg_convert(convertParamsSub(pipelineInput));
+    
+    
+    if nargin < 2, stepIndices = [-inf inf]; end;
+    if length(stepIndices) == 1, 
+        stepIndices = [stepIndices, stepIndices];
     end
+    withinRange = @(i) stepIndices(1) <= i && stepIndices(2) >= i;
 
-    D = spm_eeg_montage(montageParamsSub(pipelineInput));
+    if withinRange(1)
+        D = spm_eeg_convert(pipelineInput.convert); 
+        
+        D=D.events(1, pipelineInput.events);
+        
+        D.save();
+    end;
 
-    D = spm_eeg_filter(hpFilterParamsSub(D));
-
-    D = spm_eeg_filter(lpFilterParamsSub(D));
-
-    D = spm_eeg_downsample(downsampleParamsSub(D));
+    if withinRange(2), spm_eeg_montage(pipelineInput.montage); end;
     
-    D=D.events(1, pipelineInput.events);
+    if withinRange(3), spm_eeg_filter(pipelineInput.hpFilter); end;
+
+    if withinRange(4), spm_eeg_filter(pipelineInput.lpFilter); end;
+        
+    if withinRange(5), spm_eeg_downsample(pipelineInput.downsample); end;
     
-    resultFile = D.fullfile;
+    if withinRange(6)
+        
+        spm_eeg_epochs(pipelineInput.solidEpochs);
+        spm_eeg_epochs(pipelineInput.dashedEpochs);
+        
+    end
+    
+    if withinRange(7)
+        
+        spm_eeg_average(pipelineInput.solidAverage);
+        spm_eeg_average(pipelineInput.dashedAverage);
+        
+    end
 
     cd(callerDir);
 end
@@ -31,39 +54,4 @@ function [callerDir, sandboxDir] = mkdirSub(pipelineInput)
     callerDir = cd;
     sandboxDir = [pipelineInput.test '_sandbox'];
     mkdir(sandboxDir);
-end
-
-function S = convertParamsSub(pipelineInput)
-    S.dataset = pipelineInput.edfPath;
-    S.mode = 'continuous';
-    S.checkboundary = 0;
-    
-    startTime = pipelineInput.events(1).time - .1;
-    stopTime = pipelineInput.events(end).time + .1;
-    if startTime < 0, startTime = 0; end;
-    
-    S.timewin = [startTime stopTime];
-end
-
-
-function S = montageParamsSub(pipelineInput)
-    S.montage = pipelineInput.montage;
-    S.D = ['spmeeg_' pipelineInput.test '.mat'];
-end
-
-function S = hpFilterParamsSub(D)
-    S.D = D;
-    S.freq = .1;
-    S.band = 'high';
-end
-
-function S = lpFilterParamsSub(D)
-    S.D = D;
-    S.freq = 30;
-    S.band = 'low';
-end
-
-function S = downsampleParamsSub(D)
-    S.D = D;
-    S.fsample_new = 200;
 end
