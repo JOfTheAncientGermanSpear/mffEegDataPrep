@@ -3,7 +3,7 @@ function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, par
 %for example:
 %   test = 'hand1';
 %   mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/';
-%   eegBasePath = '/depot/home/lbuser/data/eeg1028/edfs/';
+%   edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/';
 %   inputs:
 %       params (optional):
 %       struct with overrides for any of the following fields
