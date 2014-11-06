@@ -1,19 +1,29 @@
-function runPipeline(pipelineInput, skipConvert)
+function resultFiles = runPipeline(pipelineInputs)
+%function resultFiles = runPipeline(pipelineInputs)
+    
+    resultFiles = arrayfun(@(i) singleRunSub(i), pipelineInputs, 'UniformOutput', 0);
+end
+
+function resultFile = singleRunSub(pipelineInput)
     [callerDir, sandboxDir] = mkdirSub(pipelineInput);
     cd(sandboxDir);
-    
-    if ~skipConvert
+
+    if ~pipelineInput.skipConvert
         spm_eeg_convert(convertParamsSub(pipelineInput));
     end
+
+    D = spm_eeg_montage(montageParamsSub(pipelineInput));
+
+    D = spm_eeg_filter(hpFilterParamsSub(D));
+
+    D = spm_eeg_filter(lpFilterParamsSub(D));
+
+    D = spm_eeg_downsample(downsampleParamsSub(D));
     
-    spm_eeg_montage(montageParamsSub(pipelineInput));
+    D=D.events(1, pipelineInput.events);
     
-    %D = spm_eeg_filter(hpFilterParamsSub(pipelineInput));
-    
-    %D = spm_eeg_filter(lpFilterParamsSub(pipeLineInput), D);
-    
-    %D = spm_eeg_downsample(downsampleParamsSub(pipelineInput), D);
-    
+    resultFile = D.fullfile;
+
     cd(callerDir);
 end
 
@@ -39,4 +49,21 @@ end
 function S = montageParamsSub(pipelineInput)
     S.montage = pipelineInput.montage;
     S.D = ['spmeeg_' pipelineInput.test '.mat'];
+end
+
+function S = hpFilterParamsSub(D)
+    S.D = D;
+    S.freq = .1;
+    S.band = 'high';
+end
+
+function S = lpFilterParamsSub(D)
+    S.D = D;
+    S.freq = 30;
+    S.band = 'low';
+end
+
+function S = downsampleParamsSub(D)
+    S.D = D;
+    S.fsample_new = 200;
 end
