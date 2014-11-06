@@ -1,5 +1,8 @@
-function pipelineInputs = erpEegs(tests, mffBasePath, edfBasePath)
-%function pipelineInputs = erpEegs(tests, mffBasePath)
+function pipelineInputs = erpEegs(tests, mffBasePath, edfBasePath, skipConvert)
+%function pipelineInputs = erpEegs(tests, mffBasePath, edfBasePath, skipConvert)
+%   inputs:
+%       skipConvert: if .mat & .dat files already created, speeds
+%       processing
 %for example:
 %   tests = {'hand1', 'hand2', 'hand3', 'lang1', 'lang2'};
 %   mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/';
@@ -15,20 +18,22 @@ function pipelineInputs = erpEegs(tests, mffBasePath, edfBasePath)
 pipelineInputs = cellfun(@(t) createPipelineInput(t, mffBasePath, edfBasePath), tests, 'UniformOutput', false);
 pipelineInputs = [pipelineInputs{:}];
 
-processInputsSub(pipelineInputs);
+
+if nargin < 4, skipConvert = 0; end;
+
+processInputsSub(pipelineInputs, skipConvert);
 
 end
 
-function processInputsSub(pipelineInputs)
+function processInputsSub(pipelineInputs, skipConvert)
     numInputs = length(pipelineInputs);
     
-    montageData = load('avref_vref.mat');
-    montage = montageData.montage;
+    montage = [cd filesep 'avref_vref.mat'];
     
     for i = 1:numInputs
         input = pipelineInputs(i);
         input.montage = montage;
         
-        runPipeline(input);
+        runPipeline(input, skipConvert);
     end
 end
