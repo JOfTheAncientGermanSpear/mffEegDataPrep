@@ -43,6 +43,8 @@ pipelineInput.mffSettings = mffSettingsSub(test, mffBasePath);
 
 pipelineInput.events = prepEvents(pipelineInput.mffSettings.mffPath);
 
+pipelineInput.sensorCoordinates = getSensorCoordinates(pipelineInput.mffSettings.mffPath);
+
 
 
 pipelineInput.convert = convertParamsSub(test, edfBasePath, pipelineInput.events);
