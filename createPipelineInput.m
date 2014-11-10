@@ -53,19 +53,13 @@ pipelineInput.montage = montageParamsSub(pipelineInput.convert);
 
 pipelineInput.hpFilter = hpFilterParamsSub(pipelineInput.montage);
 
-pipelineInput.lpFilter = lpFilterParamsSub(pipelineInput.hpFilter);
+pipelineInput.downsample = downsampleParamsSub(pipelineInput.hpFilter);
 
-pipelineInput.downsample = downsampleParamsSub(pipelineInput.lpFilter);
+pipelineInput.lpFilter = lpFilterParamsSub(pipelineInput.downsample);
 
-pipelineInput.dashedEpochs = dashedEpochsParamsSub(pipelineInput.downsample);
+pipelineInput.epochs = epochsParamsSub(pipelineInput.lpFilter);
 
-pipelineInput.solidEpochs = solidEpochsParamsSub(pipelineInput.downsample);
-
-pipelineInput.dashedAverage = averageParamsSub(pipelineInput.dashedEpochs);
-
-pipelineInput.solidAverage = averageParamsSub(pipelineInput.solidEpochs);
-
-
+pipelineInput.average = averageParamsSub(pipelineInput.epochs);
 
 
 pipelineInput = fillWithDefaults(params, pipelineInput);
@@ -112,6 +106,12 @@ function S = hpFilterParamsSub(prevS)
     S.prefix = 'f';
 end
 
+function S = downsampleParamsSub(prevS)
+    S.D = getOutputFromPrevS(prevS);
+    S.fsample_new = 200;
+    S.prefix = 'd';
+end
+
 function S = lpFilterParamsSub(prevS)
     S.D = getOutputFromPrevS(prevS);
     S.freq = 30;
@@ -119,37 +119,25 @@ function S = lpFilterParamsSub(prevS)
     S.prefix = 'f';
 end
 
-function S = downsampleParamsSub(prevS)
+function S = epochsParamsSub(prevS)
     S.D = getOutputFromPrevS(prevS);
-    S.fsample_new = 200;
-    S.prefix = 'd';
-end
-
-function S = dashedEpochsParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
-    
-    S.prefix = 'dashed_e';
-    
-    S.timewin = [500 5500];
-    S.trialdef.eventtype = 'dashed';
-    S.trialdef.eventvalue = 0;
-    S.trialdef.conditionlabel = 'dashed';
-end
-
-function S = solidEpochsParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
-    
-    S.prefix = 'solid_e';
+    S.prefix = 'e';
     
     S.timewin = [500 2500];
-    S.trialdef.eventtype = 'solid';
-    S.trialdef.eventvalue = 1;
-    S.trialdef.conditionlabel = 'solid';
+    
+    trialdef = @(t, v) struct('eventtype',t,'conditionlabel',t,'eventvalue',v);
+    
+    dashedTrialdef = trialdef('dashed', 0);
+    solidTrialdef = trialdef('solid', 1);
+    
+    S.trialdef(1) = dashedTrialdef;
+    S.trialdef(2) = solidTrialdef;
+    
 end
 
 function S = averageParamsSub(prevS)
     S.D = getOutputFromPrevS(prevS);
-    S.robust.bycondition = 0;
+    S.robust.bycondition = 1;
     S.robust.removebad = 0;
     S.prefix = 'm';
 end

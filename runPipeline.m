@@ -29,23 +29,13 @@ function runPipeline(pipelineInput, stepIndices)
     
     if withinRange(3), spm_eeg_filter(pipelineInput.hpFilter); end;
 
-    if withinRange(4), spm_eeg_filter(pipelineInput.lpFilter); end;
+    if withinRange(4), spm_eeg_downsample(pipelineInput.downsample); end;
         
-    if withinRange(5), spm_eeg_downsample(pipelineInput.downsample); end;
+    if withinRange(5), spm_eeg_filter(pipelineInput.lpFilter); end;
     
-    if withinRange(6)
-        
-        spm_eeg_epochs(pipelineInput.solidEpochs);
-        spm_eeg_epochs(pipelineInput.dashedEpochs);
-        
-    end
+    if withinRange(6), spm_eeg_epochs(pipelineInput.epochs); end;
     
-    if withinRange(7)
-        
-        spm_eeg_average(pipelineInput.solidAverage);
-        spm_eeg_average(pipelineInput.dashedAverage);
-        
-    end
+    if withinRange(7), spm_eeg_average(pipelineInput.average); end;
 
     cd(callerDir);
 end
