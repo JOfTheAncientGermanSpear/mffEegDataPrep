@@ -61,6 +61,8 @@ pipelineInput.epochs = epochsParamsSub(pipelineInput.lpFilter);
 
 pipelineInput.average = averageParamsSub(pipelineInput.epochs);
 
+pipelineInput.convert2Images = convert2ImagesParamsSub(pipelineInput.average);
+
 
 pipelineInput = fillWithDefaults(params, pipelineInput);
 
@@ -140,6 +142,12 @@ function S = averageParamsSub(prevS)
     S.robust.bycondition = 1;
     S.robust.removebad = 0;
     S.prefix = 'm';
+end
+
+function S = convert2ImagesParamsSub(prevS)
+    S.D = getOutputFromPrevS(prevS);
+    S.mode = 'scalp x time';
+    S.channels = 'EEG';
 end
 
 function output = getOutputFromPrevS(prevS)
