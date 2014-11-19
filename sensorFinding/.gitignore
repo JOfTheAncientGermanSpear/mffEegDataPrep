@@ -1,2 +1,5 @@
 #Python dependencies
 env/
+
+#compiled python
+*.pyc

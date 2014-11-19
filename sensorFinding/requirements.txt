@@ -3,3 +3,7 @@ six #needed for matplotlib
 matplotlib #sudo apt-get build-dep python-matplotlib (needs non python libraries too)
 numpy #sudo apt-get install python-dev (non python code needed to build)
 scipy #sudo apt-get install libatlas-base-dev gfortran
+pybrain
+Pillow
+image
+ipdb

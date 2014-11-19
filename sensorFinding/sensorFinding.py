@@ -1,20 +1,36 @@
-import Image
-
 from os import listdir
 from os.path import isfile
 
 def copyResizedImages(defaultSensorImagesPath, notSensorImagesPath):
-	defaultSensorImages = getImagesSub(defaultSensorImagesPath)
+    defaultSensorImages = getImagesSub(defaultSensorImagesPath)
 
-	notSensorImages = getImagesSub(notSensorImagesPath);
+    notSensorImages = getImagesSub(notSensorImagesPath)
 
-	copyImagesAndResize(30, defaultSensorImages, 'defaultSensors')
+    new_size = 30
+
+    sized_images = resizeImages(new_size, defaultSensorImages)
 	
-	copyImagesAndResize(30, notSensorImages, 'notSensors')
+    sized_images_not_sensor = resizeImages(new_size, notSensorImages)
 
+    saveImages('defaultSensors', [os.path.basename(f) for f in defaultSensorImages], sized_images)
 
-def getImagesSub(basePath)
-	return [f for f in listdir(basepath) if f.find('py') == -1]
+    saveImages('notSensors', [os.path.basename(f) for f in notSensorImages], sized_images_not_sensor)
 
-def copyImagesAndResize(newSize, images, newPath)
+from os.path import join
+def getImagesSub(basepath):
+    return [join(basepath, f) for f in listdir(basepath) if not f.find('png') == -1]
 
+from scipy import misc
+useGrayScale = True
+def resizeImages(newSize, images):
+    return [misc.imresize(misc.imread(i, useGrayScale), (newSize, newSize), 'cubic') for i in images]
+
+def saveImages(path, imageNames, images):
+    if os.path.exists(path):
+        os.rmdir(path)
+
+    os.mkdir(path)
+
+    tpls = zip(imageNames, images)
+    for n, i in tpls:
+        misc.imsave(os.path.join(path, n), i)
