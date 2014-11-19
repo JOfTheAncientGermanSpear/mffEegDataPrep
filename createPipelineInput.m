@@ -45,6 +45,8 @@ pipelineInput.events = prepEvents(pipelineInput.mffSettings.mffPath);
 
 pipelineInput.sensorCoordinates = getSensorCoordinates(pipelineInput.mffSettings.mffPath);
 
+[pipelineInput.fiducials, pipelineInput.eegSensors] = sensorCoordsToSpm(pipelineInput.sensorCoordinates);
+
 
 
 pipelineInput.convert = convertParamsSub(test, edfBasePath, pipelineInput.events);

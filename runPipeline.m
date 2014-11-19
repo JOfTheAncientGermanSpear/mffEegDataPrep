@@ -17,25 +17,32 @@ function runPipeline(pipelineInput, stepIndices)
     end
     withinRange = @(i) stepIndices(1) <= i && stepIndices(2) >= i;
 
-    if withinRange(1)
-        D = spm_eeg_convert(pipelineInput.convert); 
+    if withinRange(1), spm_eeg_convert(pipelineInput.convert); end;
+    
+    if withinRange(2)
+        
+        D = spm_eeg_load(pipelineInput.montage.D);
         
         D=D.events(1, pipelineInput.events);
         
-        D.save();
-    end;
-
-    if withinRange(2), spm_eeg_montage(pipelineInput.montage); end;
-    
-    if withinRange(3), spm_eeg_filter(pipelineInput.hpFilter); end;
-
-    if withinRange(4), spm_eeg_downsample(pipelineInput.downsample); end;
+        D = D.fiducials(pipelineInput.fiducials);
         
-    if withinRange(5), spm_eeg_filter(pipelineInput.lpFilter); end;
+        D = D.sensors('EEG',pipelineInput.eegSensors);
+        
+        D.save();
+    end
+
+    if withinRange(3), spm_eeg_montage(pipelineInput.montage); end;
     
-    if withinRange(6), spm_eeg_epochs(pipelineInput.epochs); end;
+    if withinRange(4), spm_eeg_filter(pipelineInput.hpFilter); end;
+
+    if withinRange(5), spm_eeg_downsample(pipelineInput.downsample); end;
+        
+    if withinRange(6), spm_eeg_filter(pipelineInput.lpFilter); end;
     
-    if withinRange(7), spm_eeg_average(pipelineInput.average); end;
+    if withinRange(7), spm_eeg_epochs(pipelineInput.epochs); end;
+    
+    if withinRange(8), spm_eeg_average(pipelineInput.average); end;
 
     cd(callerDir);
 end

@@ -1,4 +1,4 @@
-function [fiducials, sensors] = sensorCoordsToSpm(sensorCoords)
+function [fiducials, eegSensors] = sensorCoordsToSpm(sensorCoords)
 %function [fiducials, sensors] = sensorCoordsToSpm(sensorCoords)
     
     regSensorsIndxs = arrayfun(@(s)s.type == 0, sensorCoords);
@@ -10,10 +10,12 @@ function [fiducials, sensors] = sensorCoordsToSpm(sensorCoords)
     
     chanpos = zeros(length(regSensorsCoords), 3);
     chantype = repmat({'EEG'}, length(regSensorsCoords), 1);
+    label = repmat({''}, length(regSensorsCoords), 1);
     
     for i = 1:length(regSensorsCoords)
         mffS = regSensorsCoords(i);
         chanpos(i, :) = [mffS.x, mffS.y, mffS.z];
+        label(i) = {['EEG ' num2str(i)]}; %must match channel labels
     end
     
     unit = 'cm';
@@ -24,15 +26,15 @@ function [fiducials, sensors] = sensorCoordsToSpm(sensorCoords)
     
     %sensors
     
-    eeg.chanpos = chanpos;
-    eeg.chantype = chantype;
-    eeg.elecpos = chanpos;
+    eegSensors.chanpos = chanpos;
+    eegSensors.chantype = chantype;
+    eegSensors.elecpos = chanpos;
     
-    eeg.fid = fid;
+    eegSensors.label = label;
     
-    eeg.unit = unit;
+    eegSensors.fid = fid;
     
-    sensors.eeg = eeg;
+    eegSensors.unit = unit;
     
     
     
