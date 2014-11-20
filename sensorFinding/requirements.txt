@@ -7,3 +7,4 @@ pybrain
 Pillow
 image
 ipdb
+scikit-learn
