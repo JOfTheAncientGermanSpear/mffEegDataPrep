@@ -7,8 +7,10 @@ function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, par
 %   inputs:
 %       params (optional):
 %       struct with overrides for any of the following fields
-%           covert
+%           convert
 %               see spm_eeg_convert
+%           dataPrep
+%               see prepEegData
 %           montage
 %               see spm_eeg_montage
 %           hpFilter
@@ -17,13 +19,9 @@ function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, par
 %               see spm_eeg_filter
 %           downsample
 %               see spm_eeg_downsample
-%           dashedEpochs
+%           epochs
 %               see spm_eeg_epochs
-%           solidEpochs
-%               see spm_eeg_epochs
-%           dashedAverage
-%               see spm_eeg_average
-%           solidAverage
+%           average
 %               see spm_eeg_average
 %assumptions:
 %   1) mff import installed, see help prepEvents
@@ -41,17 +39,13 @@ pipelineInput.test = test;
 
 pipelineInput.mffSettings = mffSettingsSub(test, mffBasePath);
 
-pipelineInput.events = prepEvents(pipelineInput.mffSettings.mffPath);
+events = prepEvents(pipelineInput.mffSettings.mffPath);
 
-pipelineInput.sensorCoordinates = getSensorCoordinates(pipelineInput.mffSettings.mffPath);
+pipelineInput.convert = convertParamsSub(test, edfBasePath, getEventsTimeWin(events));
 
-[pipelineInput.fiducials, pipelineInput.eegSensors] = sensorCoordsToSpm(pipelineInput.sensorCoordinates);
+pipelineInput.dataPrep = dataPrepSub(pipelineInput.convert, events);
 
-
-
-pipelineInput.convert = convertParamsSub(test, edfBasePath, pipelineInput.events);
-
-pipelineInput.montage = montageParamsSub(pipelineInput.convert);
+pipelineInput.montage = montageParamsSub(pipelineInput.dataPrep);
 
 pipelineInput.hpFilter = hpFilterParamsSub(pipelineInput.montage);
 
@@ -80,51 +74,58 @@ function mffSettings = mffSettingsSub(test, mffBasePath)
     mffSettings.Fs = Fs;
 end
 
-function S = convertParamsSub(test, edfBasepath, events)
+function S = convertParamsSub(test, edfBasepath, timewin)
     S.dataset = [edfBasepath filesep test '.edf'];
     S.D = S.dataset;
     
     S.mode = 'continuous';
     S.checkboundary = 0;
     
-    startTime = events(1).time - .1;
-    stopTime = events(end).time + 6;
-    if startTime < 0, startTime = 0; end;
-    
-    S.timewin = [startTime stopTime];
+    S.timewin = timewin;
     
     S.prefix = 'spmeeg_';
     
 end
 
+function S = dataPrepSub(prevS, events)
+    S.D = getPreviousOutputSub(prevS);
+    S.prefix = 'DataPrep'; %different convention from SPM so known custom
+
+    S.events = events;
+end
+
 function S = montageParamsSub(prevS)
+    S.D = getPreviousOutputSub(prevS);
+    
     S.montage = [cd filesep 'avref_vref.mat'];
-    S.D = getOutputFromPrevS(prevS);
     S.prefix = 'M';
 end
 
 function S = hpFilterParamsSub(prevS)
+    S.D = getPreviousOutputSub(prevS);
+    
     S.freq = .1;
     S.band = 'high';
-    S.D = getOutputFromPrevS(prevS);
     S.prefix = 'f';
 end
 
 function S = downsampleParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
+    S.D = getPreviousOutputSub(prevS);
     S.fsample_new = 200;
     S.prefix = 'd';
 end
 
 function S = lpFilterParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
+    S.D = getPreviousOutputSub(prevS);
+    
     S.freq = 30;
     S.band = 'low';
     S.prefix = 'f';
 end
 
 function S = epochsParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
+    S.D = getPreviousOutputSub(prevS);
+    
     S.prefix = 'e';
     
     S.timewin = [500 2500];
@@ -140,19 +141,21 @@ function S = epochsParamsSub(prevS)
 end
 
 function S = averageParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
+    S.D = getPreviousOutputSub(prevS);
     S.robust.bycondition = 1;
     S.robust.removebad = 0;
     S.prefix = 'm';
 end
 
 function S = convert2ImagesParamsSub(prevS)
-    S.D = getOutputFromPrevS(prevS);
+    S.D = getPreviousOutputSub(prevS);
+    
     S.mode = 'scalp x time';
     S.channels = 'EEG';
 end
 
-function output = getOutputFromPrevS(prevS)
-    [~, prevInputName, ~] = fileparts(prevS.D);
-    output = [prevS.prefix prevInputName '.mat'];
+function D = getPreviousOutputSub(prevS)
+    D = prependToFilename(prevS.D, prevS.prefix);
+    [~, basename, ~] = fileparts(D);
+    D = [basename '.mat'];
 end

@@ -1,12 +1,8 @@
-function sensors = getSensorCoordinates(mffPath)
-%function sensors = getSensors(mffPath)
-
-
-%What is sensorLayout.xml?
-fullpath = [mffPath filesep 'coordinates.xml'];
+function sensors = getSensorCoordinates(sensorsPath)
+%function sensors = getSensors(sensorsPath)
 
 theObject = javaObject('com.egi.services.mff.api.Coordinates', true);
-sensorCoordinates = theObject.unmarshal(fullpath, true);
+sensorCoordinates = theObject.unmarshal(sensorsPath, true);
 
 javaSensors = sensorCoordinates.getSensorLayout.getSensors();
 

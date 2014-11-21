@@ -10,6 +10,9 @@ function runPipeline(pipelineInput, stepIndices)
     [callerDir, sandboxDir] = mkdirSub(pipelineInput);
     cd(sandboxDir);
     
+    %so we can still call fxns
+    addpath ..
+    
     
     if nargin < 2, stepIndices = [-inf inf]; end;
     if length(stepIndices) == 1, 
@@ -19,18 +22,7 @@ function runPipeline(pipelineInput, stepIndices)
 
     if withinRange(1), spm_eeg_convert(pipelineInput.convert); end;
     
-    if withinRange(2)
-        
-        D = spm_eeg_load(pipelineInput.montage.D);
-        
-        D=D.events(1, pipelineInput.events);
-        
-        D = D.fiducials(pipelineInput.fiducials);
-        
-        D = D.sensors('EEG',pipelineInput.eegSensors);
-        
-        D.save();
-    end
+    if withinRange(2), prepEegData(pipelineInput.dataPrep); end;
 
     if withinRange(3), spm_eeg_montage(pipelineInput.montage); end;
     
