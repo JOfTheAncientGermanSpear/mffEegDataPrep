@@ -1,9 +1,13 @@
-function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, params)
-%function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, params)
+function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, mriPath, params)
+%function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, mriPath, params)
 %for example:
 %   test = 'hand1';
-%   mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/';
-%   edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/';
+%   mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/sub_1/';
+%   edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/sub_1/';
+%   mriPath = '/depot/home/lbuser/data/MRI/t1.nii';
+%   S.prepEegData.sensorCoordinatesPath =
+%   '/depot/home/lbuser/data/eeg1028/mffs/sub_1/coordinates.xml';
+%   pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, mriPath, S);
 %   inputs:
 %       params (optional):
 %       struct with overrides for any of the following fields
@@ -57,8 +61,14 @@ pipelineInput.epochs = epochsParamsSub(pipelineInput.lpFilter);
 
 pipelineInput.average = averageParamsSub(pipelineInput.epochs);
 
-pipelineInput.convert2Images = convert2ImagesParamsSub(pipelineInput.average);
 
+datafileForModels = getPreviousOutputSub(pipelineInput.average);
+
+pipelineInput.forwardModel = forwardModelSub(datafileForModels, mriPath);
+
+pipelineInput.sourceInversion = sourceInversionSub(datafileForModels);
+
+pipelineInput.inversionResults = inversionResultsSub(datafileForModels);
 
 pipelineInput = fillWithDefaults(params, pipelineInput);
 
@@ -147,11 +157,38 @@ function S = averageParamsSub(prevS)
     S.prefix = 'm';
 end
 
-function S = convert2ImagesParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
-    
-    S.mode = 'scalp x time';
-    S.channels = 'EEG';
+function batch = forwardModelSub(datafile, mriMesh)
+    batch{1}.spm.meeg.source.headmodel.D = {datafile};
+    batch{1}.spm.meeg.source.headmodel.val = 1;
+    batch{1}.spm.meeg.source.headmodel.comment = '';
+    batch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {mriMesh};
+    batch{1}.spm.meeg.source.headmodel.meshing.meshres = 2;
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).fidname = 'nas';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.select = 'nas';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).fidname = 'lpa';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).specification.select = 'lpa';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).fidname = 'rpa';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(3).specification.select = 'rpa';
+    batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.useheadshape = 0;
+    batch{1}.spm.meeg.source.headmodel.forward.eeg = 'EEG BEM';
+end
+
+function batch = sourceInversionSub(datafile)
+    batch{1}.spm.meeg.source.invert.D = {datafile};
+    batch{1}.spm.meeg.source.invert.val = 1;
+    batch{1}.spm.meeg.source.invert.whatconditions.all = 1;
+    batch{1}.spm.meeg.source.invert.isstandard.standard = 1;
+    batch{1}.spm.meeg.source.invert.modality = {'EEG'};
+end
+
+function batch = inversionResultsSub(datafile)
+    batch{1}.spm.meeg.source.results.D = {datafile};
+    batch{1}.spm.meeg.source.results.val = 1;
+    batch{1}.spm.meeg.source.results.woi = [160 1560];
+    batch{1}.spm.meeg.source.results.foi = [0 0];
+    batch{1}.spm.meeg.source.results.ctype = 'evoked';
+    batch{1}.spm.meeg.source.results.space = 1;
+    batch{1}.spm.meeg.source.results.format = 'image';
 end
 
 function D = getPreviousOutputSub(prevS)

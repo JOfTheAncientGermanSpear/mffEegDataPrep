@@ -35,6 +35,12 @@ function runPipeline(pipelineInput, stepIndices)
     if withinRange(7), spm_eeg_epochs(pipelineInput.epochs); end;
     
     if withinRange(8), spm_eeg_average(pipelineInput.average); end;
+    
+    if withinRange(9), spm_jobman('run', pipelineInput.forwardModel); end;
+    
+    if withinRange(10), spm_jobman('run', pipelineInput.sourceInversion); end;
+    
+    if withinRange(11), spm_jobman('run', pipelineInput.inversionResults); end;
 
     cd(callerDir);
 end
