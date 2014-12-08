@@ -37,7 +37,7 @@ function pipelineInput = createPipelineInput(test, mffBasePath, edfBasePath, mri
 
 %pipelineInputs = cellfun(@(t) createPipelineInputSub(t, mffBasePath, edfBasePath), tests, 'UniformOutput', false);
 
-if nargin < 4, params = struct(); end;
+if nargin < 5, params = struct(); end;
 
 pipelineInput.test = test;
 
