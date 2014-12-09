@@ -70,6 +70,8 @@ pipelineInput.sourceInversion = sourceInversionSub(datafileForModels);
 
 pipelineInput.inversionResults = inversionResultsSub(datafileForModels);
 
+pipelineInput.ttestDataFile = datafileForModels;
+
 pipelineInput = fillWithDefaults(params, pipelineInput);
 
 end

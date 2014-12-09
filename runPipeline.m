@@ -1,4 +1,4 @@
-function runPipeline(pipelineInput, stepIndices)
+function res = runPipeline(pipelineInput, stepIndices)
 %function runPipeline(pipelineInput, stepIndices)
 %   pipelineInput: 
 %       see createPipelineInput
@@ -6,6 +6,8 @@ function runPipeline(pipelineInput, stepIndices)
 %       steps to execute within, useful for quickly debugging
 %       defaults to [-inf inf]
 %       saved files from previous steps must be available
+%   outputs:
+%       res: ttest results and montaged data
 
     [callerDir, sandboxDir] = mkdirSub(pipelineInput);
     cd(sandboxDir);
@@ -41,6 +43,8 @@ function runPipeline(pipelineInput, stepIndices)
     if withinRange(10), spm_jobman('run', pipelineInput.sourceInversion); end;
     
     if withinRange(11), spm_jobman('run', pipelineInput.inversionResults); end;
+    
+    if withinRange(12), res = ttestData(pipelineInput.ttestDataFile); end;
 
     cd(callerDir);
 end
