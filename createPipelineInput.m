@@ -1,16 +1,16 @@
-function pipelineInput = createPipelineInput(test, config, S)
-%function pipelineInput = createPipelineInput(test, config, params)
+function pipelineInput = createPipelineInput(test, config, overrides)
+%function pipelineInput = createPipelineInput(test, config, overrides)
 %for example:
 %   test = 'hand1';
 %   config.mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/sub_1/';
 %   config.edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/sub_1/';
 %   config.mriPath = '/depot/home/lbuser/data/MRI/t1.nii';
-%   S.prepEegData.sensorCoordinatesPath =
+%   overrides.prepEegData.sensorCoordinatesPath =
 %   '/depot/home/lbuser/data/eeg1028/mffs/sub_1/coordinates.xml';
 %   pipelineInput = createPipelineInput(test, config, S);
 %   inputs:
-%       S (optional):
-%       struct with overrides for any of the following fields
+%       overrides (optional):
+%       struct with overrides for any of the following generated fields
 %           convert
 %               see spm_eeg_convert
 %           dataPrep
@@ -37,7 +37,7 @@ function pipelineInput = createPipelineInput(test, config, S)
 
 %pipelineInputs = cellfun(@(t) createPipelineInputSub(t, mffBasePath, edfBasePath), tests, 'UniformOutput', false);
 
-if nargin < 5, S = struct(); end;
+if nargin < 5, overrides = struct(); end;
 
 pipelineInput.test = test;
 
@@ -72,7 +72,7 @@ pipelineInput.inversionResults = inversionResultsSub(datafileForModels);
 
 pipelineInput.ttestDataFile = datafileForModels;
 
-pipelineInput = fillWithDefaults(S, pipelineInput);
+pipelineInput = fillWithDefaults(overrides, pipelineInput);
 
 end
 
