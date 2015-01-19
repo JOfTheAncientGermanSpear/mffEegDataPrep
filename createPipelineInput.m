@@ -1,14 +1,24 @@
-function pipelineInput = createPipelineInput(test, config, overrides)
-%function pipelineInput = createPipelineInput(test, config, overrides)
+function pipelineInput = createPipelineInput(test, input, preProcessSteps, overrides)
+%function pipelineInput = createPipelineInput(test, input, preProcessSteps, overrides)
 %for example:
 %   test = 'hand1';
-%   config.mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/sub_1/';
-%   config.edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/sub_1/';
-%   config.mriPath = '/depot/home/lbuser/data/MRI/t1.nii';
+%   input.mffBasePath = '/depot/home/lbuser/data/eeg1028/mffs/sub_1/';
+%   input.edfBasePath = '/depot/home/lbuser/data/eeg1028/edfs/sub_1/';
+%   input.mriPath = '/depot/home/lbuser/data/MRI/t1.nii';
 %   overrides.prepEegData.sensorCoordinatesPath =
 %   '/depot/home/lbuser/data/eeg1028/mffs/sub_1/coordinates.xml';
-%   pipelineInput = createPipelineInput(test, config, S);
+%   preprocessSteps = ''; %use default ordering by setting to empty
+%   pipelineInput = createPipelineInput(test, input, '', S);
 %   inputs:
+%       test: the name of the test, used for creating the data directory
+%       input: a struct with fields for
+%           file - full path of file input for the first preprocess step
+%               note: if first preprocess step is "convert' (default), then
+%               this is the edf file with the data
+%           mriPath - full path to MRI for forward model reconstruction
+%           if the first preprocess step is "convert" (default), then the
+%           following fields are also required
+%               mffPath - full path to mff file
 %       overrides (optional):
 %       struct with overrides for any of the following generated fields
 %           convert
@@ -37,34 +47,36 @@ function pipelineInput = createPipelineInput(test, config, overrides)
 
 %pipelineInputs = cellfun(@(t) createPipelineInputSub(t, mffBasePath, edfBasePath), tests, 'UniformOutput', false);
 
-if nargin < 5, overrides = struct(); end;
+if nargin < 4, overrides = struct(); end;
+
+if nargin < 3 || isempty(preProcessSteps)
+    preProcessSteps = {'convert', 'dataPrep', 'montage', 'hpFilter', 'downsample', ...
+        'lpFilter', 'epochs', 'average'}; 
+end;
 
 pipelineInput.test = test;
 
-pipelineInput.mffSettings = mffSettingsSub(test, config.mffBasePath);
+pipelineInput.preProcessSteps = preProcessSteps;
 
-events = prepEvents(pipelineInput.mffSettings.mffPath);
+pipelineInput.mriPath = input.mriPath;
 
-pipelineInput.convert = convertParamsSub(test, config.edfBasePath, getEventsTimeWin(events));
+for i = 1:length(preProcessSteps)
+    step = preProcessSteps{i};
+    processFn = str2func(step);
+    output = processFn(input);
+    
+    if isfield(pipelineInput, step)
+        step = resolveFieldName(pipelineInput, step);
+    end
+    pipelineInput.(step) = output;
+    
+    output.file = dataFileSub(output.D, output.prefix);
+    input = output;
+end
 
-pipelineInput.dataPrep = dataPrepSub(pipelineInput.convert, events);
+datafileForModels = output.file;
 
-pipelineInput.montage = montageParamsSub(pipelineInput.dataPrep);
-
-pipelineInput.hpFilter = hpFilterParamsSub(pipelineInput.montage);
-
-pipelineInput.downsample = downsampleParamsSub(pipelineInput.hpFilter);
-
-pipelineInput.lpFilter = lpFilterParamsSub(pipelineInput.downsample);
-
-pipelineInput.epochs = epochsParamsSub(pipelineInput.lpFilter);
-
-pipelineInput.average = averageParamsSub(pipelineInput.epochs);
-
-
-datafileForModels = getPreviousOutputSub(pipelineInput.average);
-
-pipelineInput.forwardModel = forwardModelSub(datafileForModels, config.mriPath);
+pipelineInput.forwardModel = forwardModelSub(output.file, pipelineInput.mriPath);
 
 pipelineInput.sourceInversion = sourceInversionSub(datafileForModels);
 
@@ -76,8 +88,7 @@ pipelineInput = fillWithDefaults(overrides, pipelineInput);
 
 end
 
-function mffSettings = mffSettingsSub(test, mffBasePath)
-    mffPath = [mffBasePath filesep test '.mff'];
+function mffSettings = mffSettingsSub(mffPath)
 
     [mffEvents, Fs] = readMffEvents(mffPath);
     
@@ -86,57 +97,63 @@ function mffSettings = mffSettingsSub(test, mffBasePath)
     mffSettings.Fs = Fs;
 end
 
-function S = convertParamsSub(test, edfBasepath, timewin)
-    S.dataset = [edfBasepath filesep test '.edf'];
+function S = convert(input)
+    S.dataset = input.file;
     S.D = S.dataset;
+    
+    mffSettings = mffSettingsSub(input.mffPath);
+    S.mffSettings = mffSettings;
+
+    S.events = prepEvents(S.mffSettings.mffPath);
+    S.timewin = getEventsTimeWin(S.events);
     
     S.mode = 'continuous';
     S.checkboundary = 0;
-    
-    S.timewin = timewin;
     
     S.prefix = 'spmeeg_';
     
 end
 
-function S = dataPrepSub(prevS, events)
-    S.D = getPreviousOutputSub(prevS);
+function S = dataPrep(input)
+    S.D = input.file;
     S.prefix = 'DataPrep'; %different convention from SPM so known custom
 
-    S.events = events;
+    S.events = input.events;
+    
 end
 
-function S = montageParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = montage(input)
+    S.D = input.file;
     
     S.montage = [cd filesep 'avref_vref.mat'];
     S.prefix = 'M';
+    
 end
 
-function S = hpFilterParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = hpFilter(input)
+    S.D = input.file;
     
     S.freq = .1;
     S.band = 'high';
     S.prefix = 'f';
 end
 
-function S = downsampleParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = downsample(input)
+    S.D = input.file;
     S.fsample_new = 200;
     S.prefix = 'd';
 end
 
-function S = lpFilterParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = lpFilter(input)
+    S.D = input.file;
     
     S.freq = 30;
     S.band = 'low';
     S.prefix = 'f';
 end
 
-function S = epochsParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = epochs(input)
+    S.D = input.file;
     
     S.prefix = 'e';
     
@@ -152,8 +169,8 @@ function S = epochsParamsSub(prevS)
     
 end
 
-function S = averageParamsSub(prevS)
-    S.D = getPreviousOutputSub(prevS);
+function S = average(input)
+    S.D = input.file;
     S.robust.bycondition = 1;
     S.robust.removebad = 0;
     S.prefix = 'm';
@@ -193,8 +210,8 @@ function batch = inversionResultsSub(datafile)
     batch{1}.spm.meeg.source.results.format = 'image';
 end
 
-function D = getPreviousOutputSub(prevS)
-    D = prependToFilename(prevS.D, prevS.prefix);
+function D = dataFileSub(inputFile, prefix)
+    D = prependToFilename(inputFile, prefix);
     [~, basename, ~] = fileparts(D);
     D = [basename '.mat'];
 end
