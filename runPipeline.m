@@ -15,36 +15,40 @@ function res = runPipeline(pipelineInput, stepIndices)
     %so we can still call fxns
     addpath ..
     
+    numPreProcessSteps = length(pipelineInput.preProcessSteps);
+    
+    function invokeFn(index)
+        step = pipelineInput.preProcessSteps{index};
+        input = pipelineInput.(step);
+        if strcmpi(step, 'dataPrep')
+            prepEegData(input);
+        else
+            if strcmpi(step, 'lpFilter') || strcmpi(step, 'hpFilter')
+                step = 'filter';
+            end
+            fn = str2func(['spm_eeg_' step]);
+            fn(input);
+        end
+    end
     
     if nargin < 2, stepIndices = [-inf inf]; end;
     if length(stepIndices) == 1, 
         stepIndices = [stepIndices, stepIndices];
     end
+    
     withinRange = @(i) stepIndices(1) <= i && stepIndices(2) >= i;
-
-    if withinRange(1), spm_eeg_convert(pipelineInput.convert); end;
     
-    if withinRange(2), prepEegData(pipelineInput.dataPrep); end;
-
-    if withinRange(3), spm_eeg_montage(pipelineInput.montage); end;
+    for i = 1:numPreProcessSteps
+        if withinRange(i), invokeFn(i); end;
+    end
     
-    if withinRange(4), spm_eeg_filter(pipelineInput.hpFilter); end;
-
-    if withinRange(5), spm_eeg_downsample(pipelineInput.downsample); end;
-        
-    if withinRange(6), spm_eeg_filter(pipelineInput.lpFilter); end;
+    if withinRange(i + 1), spm_jobman('run', pipelineInput.forwardModel); end;
     
-    if withinRange(7), spm_eeg_epochs(pipelineInput.epochs); end;
+    if withinRange(i + 2), spm_jobman('run', pipelineInput.sourceInversion); end;
     
-    if withinRange(8), spm_eeg_average(pipelineInput.average); end;
+    if withinRange(i + 3), spm_jobman('run', pipelineInput.inversionResults); end;
     
-    if withinRange(9), spm_jobman('run', pipelineInput.forwardModel); end;
-    
-    if withinRange(10), spm_jobman('run', pipelineInput.sourceInversion); end;
-    
-    if withinRange(11), spm_jobman('run', pipelineInput.inversionResults); end;
-    
-    if withinRange(12), res = ttestData(pipelineInput.ttestDataFile); end;
+    if withinRange(i + 4), res = ttestData(pipelineInput.ttestDataFile); end;
 
     cd(callerDir);
 end
