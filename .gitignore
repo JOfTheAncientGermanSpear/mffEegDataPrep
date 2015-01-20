@@ -3,3 +3,6 @@
 
 #ignore matlab tmp files
 *.m~
+
+#ignore matlab
+.DS_Store
