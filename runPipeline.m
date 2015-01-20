@@ -1,25 +1,19 @@
-function res = runPipeline(pipelineInput, stepIndices)
-%function runPipeline(pipelineInput, stepIndices)
-%   pipelineInput: 
-%       see createPipelineInput
+function res = runPipeline(config, stepIndices)
+%function res = runPipeline(config, stepIndices)
+%   config: 
+%       see defaultConfig.m or skipConvertConfig.m
 %   stepIndices: optional
 %       steps to execute within, useful for quickly debugging
 %       defaults to [-inf inf]
 %       saved files from previous steps must be available
 %   outputs:
 %       res: ttest results and montaged data
-
-    [callerDir, sandboxDir] = mkdirSub(pipelineInput);
-    cd(sandboxDir);
     
-    %so we can still call fxns
-    addpath ..
-    
-    numPreProcessSteps = length(pipelineInput.preProcessSteps);
+    numPreProcessSteps = length(config.preProcessSteps);
     
     function invokeFn(index)
-        step = pipelineInput.preProcessSteps{index};
-        input = pipelineInput.(step);
+        step = config.preProcessSteps{index};
+        input = config.(step);
         if strcmpi(step, 'dataPrep')
             prepEegData(input);
         else
@@ -42,19 +36,17 @@ function res = runPipeline(pipelineInput, stepIndices)
         if withinRange(i), invokeFn(i); end;
     end
     
-    if withinRange(i + 1), spm_jobman('run', pipelineInput.forwardModel); end;
+    if withinRange(i + 1), spm_jobman('run', config.forwardModel); end;
     
-    if withinRange(i + 2), spm_jobman('run', pipelineInput.sourceInversion); end;
+    if withinRange(i + 2), spm_jobman('run', config.sourceInversion); end;
     
-    if withinRange(i + 3), spm_jobman('run', pipelineInput.inversionResults); end;
+    if withinRange(i + 3), spm_jobman('run', config.inversionResults); end;
     
-    if withinRange(i + 4), res = ttestData(pipelineInput.ttestDataFile); end;
-
-    cd(callerDir);
+    if withinRange(i + 4), res = ttestData(config.ttestDataFile); end;
 end
 
-function [callerDir, sandboxDir] = mkdirSub(pipelineInput)
+function [callerDir, sandboxDir] = mkdirSub(config)
     callerDir = cd;
-    sandboxDir = [pipelineInput.test '_sandbox'];
+    sandboxDir = [config.sandboxDir '_sandbox'];
     mkdir(sandboxDir);
 end
