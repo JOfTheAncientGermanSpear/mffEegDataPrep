@@ -39,8 +39,8 @@ function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath
     config.epochs.prefix = 'e';
     config.epochs.tiwewin = [500 2500];
     trialdef = @(t, v) struct('eventtype',t,'conditionlabel',t,'eventvalue',v);
-    config.trialdef(1) = trialdef('dashed', 0);
-    config.trialdef(2) = trialdef('solid', 1);
+    config.epochs.trialdef(1) = trialdef('dashed', 0);
+    config.epochs.trialdef(2) = trialdef('solid', 1);
     
     config.average.D = prependToFilename(config.epochs.D, config.epochs.prefix);
     config.average.robust.bycondition = 1;
