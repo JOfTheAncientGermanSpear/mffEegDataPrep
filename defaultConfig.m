@@ -37,7 +37,7 @@ function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath
     
     config.epochs.D = prependToFilename(config.lpFilter.D, config.lpFilter.prefix);
     config.epochs.prefix = 'e';
-    config.epochs.tiwewin = [500 2500];
+    config.epochs.timewin = [500 2500];
     trialdef = @(t, v) struct('eventtype',t,'conditionlabel',t,'eventvalue',v);
     config.epochs.trialdef(1) = trialdef('dashed', 0);
     config.epochs.trialdef(2) = trialdef('solid', 1);
