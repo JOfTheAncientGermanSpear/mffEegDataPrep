@@ -1,5 +1,5 @@
-function res = runPipeline(config, stepIndices)
-%function res = runPipeline(config, stepIndices)
+function runPipeline(config, stepIndices)
+%function runPipeline(config, stepIndices)
 %   config: 
 %       see defaultConfig.m or skipConvertConfig.m
 %   stepIndices: optional
@@ -36,13 +36,18 @@ function res = runPipeline(config, stepIndices)
         if withinRange(i), invokeFn(i); end;
     end
     
-    if withinRange(i + 1), spm_jobman('run', config.forwardModel); end;
+    if withinRange(i + 1), spm_jobman('run', config.forwardModel.batch); end;
     
-    if withinRange(i + 2), spm_jobman('run', config.sourceInversion); end;
+    if withinRange(i + 2), spm_jobman('run', config.sourceInversion.batch); end;
     
-    if withinRange(i + 3), spm_jobman('run', config.inversionResults); end;
+    if withinRange(i + 3)
+        inversionCount = length(config.inversionResults);
+        for i = 1:inversionCount
+            spm_jobman('run', config.inversionResults(i).batch);
+        end
+    end
     
-    if withinRange(i + 4), res = ttestData(config.ttestDataFile); end;
+    %if withinRange(i + 4), res = ttestData(config.ttestDataFile); end;
 end
 
 function [callerDir, sandboxDir] = mkdirSub(config)

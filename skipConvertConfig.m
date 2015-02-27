@@ -56,11 +56,14 @@ function config = skipConvertConfig(preppedDataPath, mriPath)
     config.sourceInversion.batch{1}.spm.meeg.source.invert.isstandard.standard = 1;
     config.sourceInversion.batch{1}.spm.meeg.source.invert.modality = {'EEG'};
     
-    config.inversionResults.batch{1}.spm.meeg.source.results.D = {datafile};
-    config.inversionResults.batch{1}.spm.meeg.source.results.val = 1;
-    config.inversionResults.batch{1}.spm.meeg.source.results.woi = [160 1560];
-    config.inversionResults.batch{1}.spm.meeg.source.results.foi = [0 0];
-    config.inversionResults.batch{1}.spm.meeg.source.results.ctype = 'evoked';
-    config.inversionResults.batch{1}.spm.meeg.source.results.space = 1;
-    config.inversionResults.batch{1}.spm.meeg.source.results.format = 'image';
+    inversionResultsTemplate.D = {datafile};
+    inversionResultsTemplate.val = 1;
+    inversionResultsTemplate.foi = [0 0];
+    inversionResultsTemplate.ctype = 'evoked';
+    inversionResultsTemplate.space = 1;
+    inversionResultsTemplate.format = 'image';
+    
+    config.inversionResults = createConfigInversionResults(...
+        100, config.epochs.timewin, inversionResultsTemplate);
+    
 end
