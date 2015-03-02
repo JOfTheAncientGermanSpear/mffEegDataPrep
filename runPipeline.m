@@ -38,7 +38,7 @@ function runPipeline(config, stepIndices)
     
     %if no pre-process steps run
     if isempty(i)
-        i = 1;
+        i = 0;
     end
     
     if withinRange(i + 1), spm_jobman('run', config.forwardModel.batch); end;
