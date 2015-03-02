@@ -36,6 +36,11 @@ function runPipeline(config, stepIndices)
         if withinRange(i), invokeFn(i); end;
     end
     
+    %if no pre-process steps run
+    if isempty(i)
+        i = 1;
+    end
+    
     if withinRange(i + 1), spm_jobman('run', config.forwardModel.batch); end;
     
     if withinRange(i + 2), spm_jobman('run', config.sourceInversion.batch); end;
