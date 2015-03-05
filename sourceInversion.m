@@ -65,7 +65,7 @@ D = spm_eeg_inv_forward_ui(D);
 % of its priors, through the fields below.
  
 %--------------------------------------------------------------------------
-D.inv{val}.inverse.trials = D.condlist; % Trials
+D.inv{val}.inverse.trials = D.conditions; % Trials
 D.inv{val}.inverse.type   = 'MSP';      % Priors on sources MSP, LOR or IID
 D.inv{val}.inverse.smooth = 0.4;        % Smoothness of source priors (mm)
 D.inv{val}.inverse.Np     = 64;         % Number of sparse priors (x 1/2)
