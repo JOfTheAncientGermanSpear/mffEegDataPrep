@@ -1,12 +1,11 @@
-function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath)
-%function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath)
+function config = defaultConfig(edfPath, mriPath, sensorCoordinatesPath, events)
+%function config = defaultConfig(edfPath, mriPath, sensorCoordinatesPath, events)
     config.preProcessSteps = {'convert', 'dataPrep', 'montage', 'hpFilter', 'downsample', ...
         'lpFilter', 'epochs', 'average'};
     
     config.convert.dataset = edfPath;
     config.convert.D = edfPath;
-    config.convert.mffSettings = getMffSettings(mffPath);
-    config.convert.events = prepEvents(mffPath);
+    config.convert.events = events;
     config.convert.timewin = getEventsTimeWin(config.convert.events);
     config.convert.mode = 'continuous';
     config.convert.checkboundary = 0;
@@ -39,8 +38,8 @@ function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath
     config.epochs.prefix = 'e';
     config.epochs.timewin = [500 2500];
     trialdef = @(t, v) struct('eventtype',t,'conditionlabel',t,'eventvalue',v);
-    config.epochs.trialdef(1) = trialdef('dashed', 0);
-    config.epochs.trialdef(2) = trialdef('solid', 1);
+    config.epochs.trialdef(1) = trialdef('abstract', 0);
+    config.epochs.trialdef(2) = trialdef('concrete', 1);
     
     config.average.D = prependToFilename(config.epochs.D, config.epochs.prefix);
     config.average.robust.bycondition = 1;
@@ -53,8 +52,8 @@ function config = defaultConfig(edfPath, mriPath, mffPath, sensorCoordinatesPath
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.D = {datafile};
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.val = 1;
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.comment = '';
-    config.forwardModel.batch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {mriPath};
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.meshing.meshres = 2;
+    config.forwardModel.batch{1}.spm.meeg.source.headmodel.meshing.meshes.mri = {mriPath};
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).fidname = 'nas';
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(1).specification.select = 'nas';
     config.forwardModel.batch{1}.spm.meeg.source.headmodel.coregistration.coregspecify.fiducial(2).fidname = 'lpa';
