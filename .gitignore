@@ -1,5 +1,6 @@
 #where output is created
 *_sandbox
+*Sandbox
 
 #ignore matlab tmp files
 *.m~
