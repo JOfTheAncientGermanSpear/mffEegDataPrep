@@ -36,23 +36,6 @@ function runPipeline(config, stepIndices)
         if withinRange(i), invokeFn(i); end;
     end
     
-    %if no pre-process steps run
-    if isempty(i)
-        i = 0;
-    end
-    
-    if withinRange(i + 1), spm_jobman('run', config.forwardModel.batch); end;
-    
-    if withinRange(i + 2), spm_jobman('run', config.sourceInversion.batch); end;
-    
-    if withinRange(i + 3)
-        inversionCount = length(config.inversionResults);
-        for i = 1:inversionCount
-            spm_jobman('run', config.inversionResults(i).batch);
-        end
-    end
-    
-    %if withinRange(i + 4), res = ttestData(config.ttestDataFile); end;
 end
 
 function [callerDir, sandboxDir] = mkdirSub(config)
