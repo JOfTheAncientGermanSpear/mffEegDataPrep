@@ -3,7 +3,7 @@ function timewin = getEventsTimeWin(events, buffer)
 
 if nargin < 2
     buffer = [.1 6];
-elseif len(buffer) == 1
+elseif length(buffer) == 1
     buffer = [buffer buffer];
 else
 end

@@ -12,17 +12,32 @@ function runPipeline(config, stepIndices)
     numPreProcessSteps = length(config.preProcessSteps);
     
     function invokeFn(index)
-        step = config.preProcessSteps{index};
-        input = config.(step);
-        if strcmpi(step, 'dataPrep')
-            prepEegData(input);
+        fnInfo = config.preProcessSteps{index};
+        
+        if iscell(fnInfo)
+            fn = fnInfo{1};
+            inputKey = fnInfo{2};
         else
-            if strcmpi(step, 'lpFilter') || strcmpi(step, 'hpFilter')
-                step = 'filter';
-            end
-            fn = str2func(['spm_eeg_' step]);
-            fn(input);
+            fn = fnInfo;
+            inputKey = fnInfo;
         end
+        
+        input = config.(inputKey);
+        
+        if ischar(fn)
+            fn = str2func(fn);
+        end
+        
+        fn(input);
+        %if strcmpi(fn, 'dataPrep')
+        %    prepEegData(input);
+        %else
+        %    if strcmpi(fn, 'lpFilter') || strcmpi(fn, 'hpFilter')
+        %        fn = 'filter';
+        %    end
+        %    fn = str2func(['spm_eeg_' fn]);
+        %    fn(input);
+        %end
     end
     
     if nargin < 2, stepIndices = [-inf inf]; end;
