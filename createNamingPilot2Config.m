@@ -30,6 +30,8 @@ function config = createNamingPilot2Config(edfPath, sensorCoordinatesPath, event
     function prepChannels(badChannels)
         D = spm_eeg_load(preppedFileName);
         D = badchannels(D, badChannels, 1);
+        newChanLabels = cellfun(@(c) ['EEG ' c], D.chanlabels(), 'UniformOutput', 0);
+        D = D.chanlabels(:, newChanLabels);
         D = D.chantype(:, 'EEG');
         D.save();
     end
