@@ -12,3 +12,6 @@
 
 #for Python
 *.pyc
+
+#idea dir
+.idea/
