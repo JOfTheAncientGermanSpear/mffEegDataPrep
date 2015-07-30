@@ -1,6 +1,5 @@
 import os
 
-import matplotlib.pylab as plt
 from nilearn.plotting import plot_glass_brain
 
 def gen_jpegs(nii_dir):
